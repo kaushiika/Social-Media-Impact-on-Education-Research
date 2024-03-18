@@ -1,0 +1,239 @@
+---
+title: "Social Media Impact on Education"
+format: pdf
+editor: visual
+---
+
+## Introduction
+Social media's influence on education is a vital area of study, exploring its effects on student behavior and academic engagement.
+
+```{r}
+library(wesanderson)
+library(ggplot2) 
+library(dplyr)
+library(ggalt)   
+library(tidyverse)
+library(mosaic)
+library("ggpubr")
+library(latticeExtra)
+library(sysfonts)
+library("showtext")
+library(PairedData)
+library(rstatix)
+library(XML)
+library(reshape2)
+library(pyramid)
+library(cowplot)
+```
+
+## Methods
+We conducted an experimental survey via Qualtrics and mTurk, examining students' interaction with educational content.
+
+```{r}
+blue <- "#0171CE"
+red <- "#DE4433"
+font_add_google("Lato")
+showtext_auto(enable = TRUE, record = TRUE)
+```
+
+```{r}
+demo<-read.csv2(file="SocialMedia_Cleaned.csv", sep = ",")
+prepost<-read.csv2(file="prepost.csv", sep = ",")
+```
+## Results
+Analysis of 229 respondents revealed insights into age, gender, internet usage, and educational levels impacting social media engagement.
+
+#-------------------Age & Gender-----------
+
+```{r}
+favstats(demo$AGE)
+
+demo$AGE<-as.numeric(demo$AGE)
+
+ggplot(demo, aes(x=factor(AGE)))+
+  geom_bar(width=0.7, fill="steelblue")+
+  theme_minimal()
+```
+
+```{r}
+ggplot(demo, aes(x=as.factor(AGE), fill=as.factor(AGE) )) + 
+  geom_bar(width=0.5, fill = "steelblue") +
+  ggtitle("Participant Ages\nMean = 32.06; Standard Deviation = 8.12") +
+  xlab("Ages") + ylab("Frequency")+
+  scale_y_continuous(limits = c(0, 65), breaks = seq(0, 65, by = 2))
+
+```
+
+```{r}
+demo %>% count(GENDER_1)
+
+demo %>% group_by(GENDER_1) %>% count(AGE)
+```
+
+```{r}
+# ag_2<-demo %>%
+#   group_by(GENDER_1) %>% 
+#   count(age_group)
+
+demo["age_group"] = cut(demo$AGE, c(18, 20, 30, 40, 50, 60, 70, Inf), c("18-20", "21-30", "31-40", "41-50", "51-60", "61-70", "61-70"), include.lowest=TRUE)
+ages <- c("18-20", "21-30", "31-40", "41-50", "51-60", "61-70")
+males <- c(0,43,22,5,4,0)
+females <- c(1,60,67,16,5,1)
+data <- data.frame(males,females,ages)
+pyramid(data)
+
+age<-pyramids(Left=males, Llab="Males", Right=females, Rlab="Females", Center = ages,
+         Laxis=c(0,10,20,30,40,50,60,70), main="Participants Age - Mean = 32.06; Standard Deviation = 8.12")
+
+```
+
+#-------------------Internet to study--------
+
+```{r}
+
+
+demo$IN_EDU<-as.factor(demo$IN_EDU)
+
+edu<-demo %>%
+  count(IN_EDU)
+
+ggplot(edu, aes(x=IN_EDU, y=n)) +
+     geom_bar(stat="identity", fill = "salmon4") +
+     ggtitle("Respondents that use internet to study") +
+     geom_text(aes(label=n, vjust=-1))+
+    xlab("") + ylab("Count")+
+    scale_y_continuous(limits = c(0, 230), breaks = seq(0, 230, by = 50))
+
+```
+
+#-------------------Income-----------
+
+```{r}
+demo$INCOME<-as.factor(demo$INCOME)
+demo %>% count(INCOME)
+
+demo$INCOME <- factor(demo$INCOME, levels=c("Less than $10,000", "$10,000 - $19,999", "$20,000 - $29,999", "$30,000 - $39,999", "$40,000 - $49,999", "$50,000 - $59,999", "$60,000 - $69,999", "$70,000 - $79,999", "$80,000 - $89,999", "$90,000 - $99,999", "$100,000 - $149,999"))
+
+ggplot(demo, aes(x=INCOME, fill=INCOME)) + 
+  geom_bar(width=0.5, fill = "chartreuse4") +
+  #ggtitle("Annual Income ($)") +
+  xlab("Annual Income ($)") + ylab("Count")+ geom_text(stat='count', aes(label=after_stat(count)), vjust=-1)+
+  scale_y_continuous(limits = c(0, 60), breaks = seq(0, 60, by = 15))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  scale_x_discrete(limits = c("Less than $10,000", "$10,000 - $19,999", "$20,000 - $29,999", "$30,000 - $39,999", "$40,000 - $49,999", "$50,000 - $59,999", "$60,000 - $69,999", "$70,000 - $79,999", "$80,000 - $89,999", "$90,000 - $99,999", "$100,000 - $149,999"))
+
+```
+
+#-------------------Education-----------
+
+```{r}
+demo %>% count(EDU_1)
+
+demo$EDU_1 <- factor(demo$EDU_1, levels=c("High School (Not Completed)", "High School", "Associate's Degree", "Some College coursework", "Bachelor's Degree", "Master's or PhD"))
+
+ggplot(demo, aes(x=EDU_1, fill=EDU_1)) + 
+  geom_bar(width=0.5, fill = "darkslategray4") +
+  #ggtitle("Annual Income ($)") +
+  xlab("Education Levels") + ylab("Count")+ geom_text(stat='count', aes(label=after_stat(count)), vjust=-1)+
+  scale_y_continuous(limits = c(0, 150), breaks = seq(0, 150, by = 50))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+#-------------------Living Environment-----------
+
+```{r}
+demo %>% count(LOC_1)
+
+demo$LOC_1 <- factor(demo$LOC_1, levels=c("Urban", "Rural", "Other"))
+
+ggplot(demo, aes(x=LOC_1, fill=LOC_1)) + 
+  geom_bar(width=0.5, fill = "coral4") +
+  #ggtitle("Annual Income ($)") +
+  xlab("") + ylab("Count")+ geom_text(stat='count', aes(label=after_stat(count)), vjust=-1)+
+  scale_y_continuous(limits = c(0, 150), breaks = seq(0, 150, by = 50))
+
+```
+
+#-------------------Hours spent on internet-----------
+
+```{r}
+favstats(demo$HOURS)
+
+demo %>% count(HOURS)
+
+demo$AGE<-as.numeric(demo$HOURS)
+
+ggplot(demo, aes(x=factor(HOURS)))+
+  geom_bar(width=0.7, fill="steelblue")+
+  theme_minimal()
+```
+
+#-------------------PRE-POST-----------
+
+```{r}
+
+favstats(demo$PRE)
+favstats(demo$POST)
+
+#prepost$PID<-as.factor(prepost$PID)
+prepost$GROUP<-as.factor(prepost$GROUP)
+prepost$VALUE<-as.numeric(prepost$VALUE)
+prepost$CONDITION<-as.factor(prepost$CONDITION)
+
+```
+
+```{r}
+ggplot(prepost, aes(x=GROUPS, y=VALUE, fill=CONDITION)) + 
+  geom_bar(position = "dodge", stat = "identity")+
+  ylim(0,6)
+
+ggplot(prepost, aes(x=reorder(GROUPS,desc(GROUPS)), y=VALUE, fill=reorder(CONDITION, desc(CONDITION)))) + 
+  geom_boxplot()+
+  geom_jitter(shape=16, position=position_jitter(0.2))+
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  xlab("Treatment Method")+
+  ylab("Pre and Post Willingness to Engage scores")+
+  guides(fill=guide_legend(title="Treatment Condition"))
+  
+```
+
+```{r}
+res_aov<-aov(VALUE ~ CONDITION+GROUPS, data = prepost)
+
+summary(res_aov)
+```
+
+```{r}
+ggplot(data = demo,
+       aes(
+         x = EDU_1,
+         y = prop.table(stat(count)),
+         fill = factor(IN_EDU), width = -6,
+         label = scales::percent(prop.table(stat(count)))
+       )) +
+  geom_bar(position = position_dodge(), width = 0.4) + theme(axis.text = element_text(size = -0.30))+
+  geom_text(
+    stat = "count",
+    position = position_dodge(.8),
+    vjust = -1,
+    size = 2.5
+  ) + scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+  labs(title = "Education levels based on internet usage",
+       x = "Level of Education",
+       y = "Count") +
+  theme_classic() +
+  scale_fill_discrete(
+    name = "Respondents that use internet to study",
+    labels = c("No", "Yes")
+  )
+```
+
+## Discussion
+The study's findings emphasize the need for tailored educational strategies considering social media's ubiquitous presence in students' lives.
+
+## Conclusion
+This research provides valuable insights for educators and policymakers to leverage social media positively in education.
+
+## Repository Name: Social-Media-Impact-on-Education-Research
+
